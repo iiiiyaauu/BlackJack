@@ -54,13 +54,15 @@ class BlackJackGame extends Game {
   }
 
   startGame() {
-    this.setCardImagesVariant2();
+    this.setCardImagesVariant1();
     cardsEl.innerHTML = "";
     this.#hasBlackjack = false;
     startGamebtn.textContent = "New Game";
     newCardbtn.style.display = "block";
     cardsEl.style.display = "flex";
     this.isAlive = true;
+    let audio = document.getElementById(`sound${randomIntFromInterval(1, 4)}`)
+    audio.play()
     let firstCard = this.getRandomCardValue();
     let secondCard = this.getRandomCardValue();
     this.cards = [firstCard, secondCard];
@@ -71,6 +73,8 @@ class BlackJackGame extends Game {
 
   newcard() {
     if (this.isAlive === true && this.#hasBlackjack === false) {
+      let audio = document.getElementById(`sound${randomIntFromInterval(1, 4)}`)
+      audio.play() 
       let card = this.getRandomCardValue();
       this.sum += card;
       this.cards.push(card);
