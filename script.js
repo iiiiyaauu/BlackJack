@@ -1,14 +1,41 @@
 let titleEl = document.getElementById("title");
-let startGamebtn = document.getElementById("startgame");
-let newCardbtn = document.getElementById("new-card");
-let cardEl = document.querySelector(".card");
 let cardsEl = document.querySelector(".cards");
+let startGamebtn = document.getElementById("startgame");
+let startNewGamebtn = document.getElementById('startNewGame');
+let newCardbtn = document.getElementById("new-card");
+let scoreEl = document.querySelector(".score");
 let gameOutcome = document.querySelector(".game-outcome");
-let sumEl = document.querySelector(".sum");
-let cardDeckEl = document.querySelector(".card-deck");
+let betForm = document.getElementById("bet-form");
+let betInputEl = document.querySelector(".bet-input");
+let betEl = document.querySelector(".bet");
 
-function randomIntFromInterval(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+// Generate the deck programmatically
+function generateDeck() {
+  const suits = ["spades", "clubs", "diamonds", "hearts"];
+  const values = [
+    { name: "two", value: 2 },
+    { name: "three", value: 3 },
+    { name: "four", value: 4 },
+    { name: "five", value: 5 },
+    { name: "six", value: 6 },
+    { name: "seven", value: 7 },
+    { name: "eight", value: 8 },
+    { name: "nine", value: 9 },
+    { name: "ten", value: 10 },
+    { name: "jack", value: 10 },
+    { name: "queen", value: 10 },
+    { name: "king", value: 10 },
+    { name: "ace", value: 11 },
+  ];
+
+  // Combine suits and values to create cards
+  return suits.flatMap((suit) =>
+    values.map(({ name, value }) => ({
+      name: `${name}_${suit}`,
+      value,
+      img: `images/cards/${name}-${suit}.png`,
+    }))
+  );
 }
 
 class Game {
@@ -18,211 +45,158 @@ class Game {
 }
 
 class BlackJackGame extends Game {
-  #hasBlackjack;
   constructor(name) {
     super(name);
     titleEl.textContent = name;
-    this.#hasBlackjack = false;
-    this.isAlive = false;
-    this.sum = 0;
-    this.cardImages = null;
-  }
-
-  getCardImg(num) {
-    const numberOfImages = this.cardImages[num].length;
-    const randomSrc =
-      this.cardImages[num][randomIntFromInterval(0, numberOfImages - 1)];
-    return randomSrc;
-  }
-
-  getRandomCardValue() {
-    let randomNumb = randomIntFromInterval(2, 11);
-    this.setCardImg(randomNumb);
-    if (randomNumb > 10) {
-      return 10;
-    } else if (randomNumb === 1) {
-      return 11;
-    } else {
-      return randomNumb;
-    }
-  }
-
-  setCardImg(num) {
-    const randomCardSrc = this.getCardImg(num);
-    const newCardEl = `<div class="card-wrapper"><img class="card" src="${randomCardSrc}" alt="" /></div>`;
-    cardsEl.innerHTML += newCardEl;
+    this.initialDeck = generateDeck();
+    this.deck = [...this.initialDeck]; // Copy the initial deck
+    this.cards = []; // Clear drawn cards
+    this.score = 0; // Reset the score to zero
+    this.bet = 0;
   }
 
   startGame() {
-    this.setCardImagesVariant1();
-    cardsEl.innerHTML = "";
-    this.#hasBlackjack = false;
-    startGamebtn.textContent = "New Game";
+    this.cards = [this.drawCard(), this.drawCard()];
+    cardsEl.innerHTML = this.displayPlayerCards();
     newCardbtn.style.display = "block";
-    cardsEl.style.display = "flex";
-    this.isAlive = true;
-    let audio = document.getElementById(`sound${randomIntFromInterval(1, 4)}`)
-    audio.play()
-    let firstCard = this.getRandomCardValue();
-    let secondCard = this.getRandomCardValue();
-    this.cards = [firstCard, secondCard];
-    this.sum = firstCard + secondCard;
-    console.log(this.sum, this.cards)
-    this.checkIfWin();
-  }
-
-  newcard() {
-    if (this.isAlive === true && this.#hasBlackjack === false) {
-      let audio = document.getElementById(`sound${randomIntFromInterval(1, 4)}`)
-      audio.play() 
-      let card = this.getRandomCardValue();
-      this.sum += card;
-      this.cards.push(card);
-      console.log(this.sum, this.cards)
-      this.checkIfWin();
+    this.updateScore(); // Update the score based on the drawn cards
+    if (this.hasPlayerWon()) {
+      this.updateBet(3);
     }
   }
 
-  setCardImagesVariant1() {
-    this.cardImages = allCards;
+  // Draws a random card from the deck and updates the state
+  drawCard() {
+    if (this.deck.length === 0) {
+      console.log("No cards left in the deck.");
+      return null;
+    }
+    const randomIndex = Math.floor(Math.random() * this.deck.length);
+    const [randomCard] = this.deck.splice(randomIndex, 1); // Remove the card from the deck
+
+    this.cards.push(randomCard); // Add the card to the player's hand
+    this.updateScore();
+
+    return randomCard;
   }
 
-  setCardImagesVariant2() {
-    this.cardImages = allCards2;
+  // Updates the player's score by summing the values of the drawn cards
+  updateScore() {
+    let aces = 0;
+    let score = this.cards.reduce((acc, cur) => {
+      if (cur.name === "Ace") {
+        aces += 1;
+        return acc + 11;
+      }
+      return acc + cur.value;
+    }, 0);
+
+    // Adjust score for Aces
+    while (score > 21 && aces > 0) {
+      score -= 10;
+      aces -= 1;
+    }
+
+    this.score = score;
   }
 
-  checkIfWin() {
-    sumEl.textContent = "Sum: " + this.sum;
-    if (this.sum > 21) {
-      this.message = "You've Lost!";
-      this.isAlive = false;
+  // Checks if the player has lost the game
+  hasPlayerLost() {
+    if (this.score > 21 || this.cards.length > 5) {
       newCardbtn.style.display = "none";
-    } else if (this.sum === 21) {
-      this.message = "Congratulations!";
-      this.#hasBlackjack = true;
-      newCardbtn.style.display = "none";
+      this.updateBet(0);
+      return true;
     } else {
-      this.message = "Do you want withdraw another card?";
+      return false;
     }
-    gameOutcome.textContent = this.message;
   }
+
+  // Checks if the player has won the game
+  hasPlayerWon() {
+    if (this.score === 21) {
+      newCardbtn.style.display = "none";
+      this.updateBet(2);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Returns the remaining cards in the deck
+  getDeck() {
+    return this.deck;
+  }
+
+  // Returns the cards drawn by the player
+  getPlayerCards() {
+    return this.cards;
+  }
+
+  // Returns the current score of the player
+  getPlayerScore() {
+    return this.score;
+  }
+  
+  displayPlayerCards() {
+    let cards = '';
+    for (let card of this.getPlayerCards()) {
+      cards += `<div class="card"><img src="${card.img}" alt="${card.name}" /></div>`
+    }
+    return cards
+  }
+
+  getOutcome() {
+    if (this.hasPlayerWon()) {
+      return 'Congratulations! You won!';
+    } else if (this.hasPlayerLost()) {
+      return "You've Lost!"
+    } else {
+      return "Do you want withdraw another card?"
+    }
+  }
+
+  setBet(bet) {
+    if (Number(bet) > 0) {
+      this.bet += Number(bet);
+      startGamebtn.style.display = 'block';
+      return true;
+    }
+  }
+
+  getBet() {
+    return this.bet;
+  }
+
+  updateBet(multiplyBy) {
+    this.bet *= multiplyBy
+  };
 }
 
 let game = new BlackJackGame("BlackJack");
 
 function startGame() {
   game.startGame();
+  scoreEl.textContent = 'Score: ' + game.getPlayerScore();
+  gameOutcome.textContent = game.getOutcome();
+  betEl.textContent = 'Your Bet: ' + game.getBet();
+  startNewGamebtn.style.display = 'block';
+  startGamebtn.style.display = 'none';
+  betForm.style.display = 'none';
 }
 
 function newcard() {
-  game.newcard();
+  game.drawCard();
+  cardsEl.innerHTML = game.displayPlayerCards();
+  scoreEl.textContent = 'Score: ' + game.getPlayerScore();
+  gameOutcome.textContent = game.getOutcome();
+  betEl.textContent = 'Your Bet: ' + game.getBet();
 }
 
-cardDeckEl.addEventListener("click", () => {
-  game.setCardImagesVariant2();
+betForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  let betIsSet = game.setBet(betInputEl.value);
+  betInputEl.value = '';
+  if (betIsSet) {
+    betEl.textContent = 'Your Bet: ' + game.getBet();
+  }
 })
-
-const allCards = {
-  2: [
-    "png/2_of_clubs.png",
-    "png/2_of_diamonds.png",
-    "png/2_of_hearts.png",
-    "png/2_of_spades.png",
-  ],
-  3: [
-    "png/3_of_clubs.png",
-    "png/3_of_diamonds.png",
-    "png/3_of_hearts.png",
-    "png/3_of_spades.png",
-  ],
-  4: [
-    "png/4_of_clubs.png",
-    "png/4_of_diamonds.png",
-    "png/4_of_hearts.png",
-    "png/4_of_spades.png",
-  ],
-  5: [
-    "png/5_of_clubs.png",
-    "png/5_of_diamonds.png",
-    "png/5_of_hearts.png",
-    "png/5_of_spades.png",
-  ],
-  6: [
-    "png/6_of_clubs.png",
-    "png/6_of_diamonds.png",
-    "png/6_of_hearts.png",
-    "png/6_of_spades.png",
-  ],
-  7: [
-    "png/7_of_clubs.png",
-    "png/7_of_diamonds.png",
-    "png/7_of_hearts.png",
-    "png/7_of_spades.png",
-  ],
-  8: [
-    "png/8_of_clubs.png",
-    "png/8_of_diamonds.png",
-    "png/8_of_hearts.png",
-    "png/8_of_spades.png",
-  ],
-  9: [
-    "png/9_of_clubs.png",
-    "png/9_of_diamonds.png",
-    "png/9_of_hearts.png",
-    "png/9_of_spades.png",
-  ],
-  10: [
-    "png/10_of_clubs.png",
-    "png/10_of_diamonds.png",
-    "png/10_of_hearts.png",
-    "png/10_of_spades.png",
-    "png/jack_of_clubs.png",
-    "png/jack_of_diamonds.png",
-    "png/jack_of_hearts.png",
-    "png/jack_of_spades.png",
-    "png/king_of_clubs.png",
-    "png/king_of_diamonds.png",
-    "png/king_of_hearts.png",
-    "png/king_of_spades.png",
-    "png/queen_of_clubs.png",
-    "png/queen_of_diamonds.png",
-    "png/queen_of_hearts.png",
-    "png/queen_of_spades.png",
-  ],
-  11: [
-    "png/ace_of_clubs.png",
-    "png/ace_of_diamonds.png",
-    "png/ace_of_hearts.png",
-    "png/ace_of_spades.png",
-  ],
-};
-
-const allCards2 = {
-  2: ["images/2.2.png", "images/2.4.png", "images/2.5.png", "images/2.7.png"],
-  3: ["images/3.2.png", "images/3.4.png", "images/3.5.png", "images/3.7.png"],
-  4: ["images/4.2.png", "images/4.4.png", "images/4.5.png", "images/4.7.png"],
-  5: ["images/5.2.png", "images/5.4.png", "images/5.5.png", "images/5.7.png"],
-  6: ["images/6.2.png", "images/6.4.png", "images/6.5.png", "images/6.7.png"],
-  7: ["images/7.2.png", "images/7.4.png", "images/7.5.png", "images/7.7.png"],
-  8: ["images/8.2.png", "images/8.4.png", "images/8.5.png", "images/8.7.png"],
-  9: ["images/9.2.png", "images/9.4.png", "images/9.5.png", "images/9.7.png"],
-  10: [
-    "images/10.2.png",
-    "images/10.4.png",
-    "images/10.5.png",
-    "images/10.7.png",
-    "images/J2.png",
-    "images/J4.png",
-    "images/J5.png",
-    "images/J7.png",
-    "images/K2.png",
-    "images/K4.png",
-    "images/K5.png",
-    "images/K7.png",
-    "images/Q2.png",
-    "images/Q4.png",
-    "images/Q5.png",
-    "images/Q7.png",
-  ],
-  11: ["images/A.2.png", "images/A.4.png", "images/A.5.png", "images/A.7.png"],
-};

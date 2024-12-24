@@ -9,25 +9,26 @@
   <body>
     <div class="main">
       <div class="content">
-        <img class="card-deck" src="png/Card_DeckA-88x140.png" alt="">
+        <img class="card-deck" src="images/card-back.webp" alt="card deck">
       </div>
       <div class="content">
         <h1 id="title"></h1>
         <button id="startgame" onclick="startGame()">Start Game</button>
+        <button id="startNewGame" onclick="window.location.reload()">Start New Game</button>
         <button id="new-card" onclick="newcard()">New Card</button>
         <div class="cards">
         </div>
-        <h2 class="sum"></h2>
+        <h2 class="score"></h2>
+        <form id="bet-form">
+          <input class="bet-input" type="text" placeholder="Your bet">
+          <button class= "submit-btn" type="submit">Submit bet</button>
+        </form>
       </div>
       <div class="content">
         <h1 class="game-outcome"></h1>
+        <h1 class="bet"></h1>
       </div>
     </div>
-
-    <audio id="sound1" src="sounds/mixkit-cartoon-fart-sound-2891.wav"></audio>
-    <audio id="sound2" src="sounds/mixkit-cartoon-toy-whistle-616.wav"></audio>
-    <audio id="sound3" src="sounds/mixkit-hard-pop-click-2364.wav"></audio>
-    <audio id="sound4" src="sounds/mixkit-long-pop-2358.wav"></audio>
     <script src="script.js"></script>
   </body>
 </html>
