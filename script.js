@@ -1,7 +1,7 @@
 let titleEl = document.getElementById("title");
 let cardsEl = document.querySelector(".cards");
 let startGamebtn = document.getElementById("startgame");
-let startNewGamebtn = document.getElementById('startNewGame');
+let startNewGamebtn = document.getElementById("startNewGame");
 let newCardbtn = document.getElementById("new-card");
 let scoreEl = document.querySelector(".score");
 let gameOutcome = document.querySelector(".game-outcome");
@@ -137,9 +137,9 @@ class BlackJackGame extends Game {
   getPlayerScore() {
     return this.score;
   }
-  
+
   displayPlayerCards() {
-    let cards = '';
+    let cards = "";
     for (let card of this.getPlayerCards()) {
       cards += `<div class="card"><img src="${card.img}" alt="${card.name}" /></div>`;
     }
@@ -148,7 +148,7 @@ class BlackJackGame extends Game {
 
   getOutcome() {
     if (this.hasPlayerWon()) {
-      return 'Congratulations! You won!';
+      return "Congratulations! You won!";
     } else if (this.hasPlayerLost()) {
       return "You've Lost!";
     } else {
@@ -159,7 +159,7 @@ class BlackJackGame extends Game {
   setBet(bet) {
     if (Number(bet) > 0) {
       this.bet += Number(bet);
-      startGamebtn.style.display = 'block';
+      startGamebtn.style.display = "block";
       return true;
     }
   }
@@ -170,51 +170,51 @@ class BlackJackGame extends Game {
 
   updateBet(multiplyBy) {
     this.bet *= multiplyBy;
-  };
+  }
 }
 
 let game = new BlackJackGame("BlackJack");
 
 function startGame() {
   game.startGame();
-  scoreEl.textContent = 'Score: ' + game.getPlayerScore();
+  scoreEl.textContent = "Score: " + game.getPlayerScore();
   gameOutcome.textContent = game.getOutcome();
-  betEl.textContent = 'Your Bet: ' + game.getBet();
-  startNewGamebtn.style.display = 'block';
-  startGamebtn.style.display = 'none';
-  betForm.style.display = 'none';
+  betEl.textContent = "Your Bet: " + game.getBet();
+  startNewGamebtn.style.display = "block";
+  startGamebtn.style.display = "none";
+  betForm.style.display = "none";
   let timeleft = 5;
-  let gameStartTimer = setInterval(function() {
-  countdownEl.style.display = "block";
-  if (timeleft <= 0) {
-    clearInterval(gameStartTimer);
-    if (game.getPlayerCards().length === 2) {
-      window.location.reload();
-    }
-  } else {
-    if (game.getPlayerCards().length > 2) {
-      countdownEl.style.display = "none";
+  let gameStartTimer = setInterval(function () {
+    countdownEl.style.display = "block";
+    if (timeleft <= 0) {
       clearInterval(gameStartTimer);
+      if (game.getPlayerCards().length === 2) {
+        window.location.reload();
+      }
+    } else {
+      if (game.getPlayerCards().length > 2) {
+        countdownEl.style.display = "none";
+        clearInterval(gameStartTimer);
+      }
+      countdownEl.innerHTML = timeleft + " seconds remaining";
     }
-    countdownEl.innerHTML = timeleft + " seconds remaining";
-  }
-  timeleft -= 1;
+    timeleft -= 1;
   }, 1000);
 }
 
 function newcard() {
   game.drawCard();
   cardsEl.innerHTML = game.displayPlayerCards();
-  scoreEl.textContent = 'Score: ' + game.getPlayerScore();
+  scoreEl.textContent = "Score: " + game.getPlayerScore();
   gameOutcome.textContent = game.getOutcome();
-  betEl.textContent = 'Your Bet: ' + game.getBet();
+  betEl.textContent = "Your Bet: " + game.getBet();
 }
 
-betForm.addEventListener('submit', function(e) {
+betForm.addEventListener("submit", function (e) {
   e.preventDefault();
   let betIsSet = game.setBet(betInputEl.value);
-  betInputEl.value = '';
+  betInputEl.value = "";
   if (betIsSet) {
-    betEl.textContent = 'Your Bet: ' + game.getBet();
+    betEl.textContent = "Your Bet: " + game.getBet();
   }
-})
+});
