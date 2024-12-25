@@ -3,25 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Pixelify+Sans:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
     <title>Document</title>
   </head>
   <body>
     <div class="main">
       <div class="content">
-        <img class="card-deck" src="images/card-back.webp" alt="card deck">
+        <img class="card-deck" src="images/card-back.webp" alt="card deck" />
       </div>
       <div class="content">
         <h1 id="title"></h1>
+        <div id="countdown"></div>
         <button id="startgame" onclick="startGame()">Start Game</button>
-        <button id="startNewGame" onclick="window.location.reload()">Start New Game</button>
+        <button id="startNewGame" onclick="window.location.reload()">
+          Start New Game
+        </button>
         <button id="new-card" onclick="newcard()">New Card</button>
-        <div class="cards">
-        </div>
+        <div class="cards"></div>
         <h2 class="score"></h2>
         <form id="bet-form">
-          <input class="bet-input" type="text" placeholder="Your bet">
-          <button class= "submit-btn" type="submit">Submit bet</button>
+          <input class="bet-input" type="text" placeholder="Your bet" />
+          <button class="submit-btn" type="submit">Submit bet</button>
         </form>
       </div>
       <div class="content">

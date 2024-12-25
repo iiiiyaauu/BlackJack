@@ -8,6 +8,7 @@ let gameOutcome = document.querySelector(".game-outcome");
 let betForm = document.getElementById("bet-form");
 let betInputEl = document.querySelector(".bet-input");
 let betEl = document.querySelector(".bet");
+let countdownEl = document.getElementById("countdown");
 
 // Generate the deck programmatically
 function generateDeck() {
@@ -140,18 +141,18 @@ class BlackJackGame extends Game {
   displayPlayerCards() {
     let cards = '';
     for (let card of this.getPlayerCards()) {
-      cards += `<div class="card"><img src="${card.img}" alt="${card.name}" /></div>`
+      cards += `<div class="card"><img src="${card.img}" alt="${card.name}" /></div>`;
     }
-    return cards
+    return cards;
   }
 
   getOutcome() {
     if (this.hasPlayerWon()) {
       return 'Congratulations! You won!';
     } else if (this.hasPlayerLost()) {
-      return "You've Lost!"
+      return "You've Lost!";
     } else {
-      return "Do you want withdraw another card?"
+      return "Do you want withdraw another card?";
     }
   }
 
@@ -168,7 +169,7 @@ class BlackJackGame extends Game {
   }
 
   updateBet(multiplyBy) {
-    this.bet *= multiplyBy
+    this.bet *= multiplyBy;
   };
 }
 
@@ -182,6 +183,23 @@ function startGame() {
   startNewGamebtn.style.display = 'block';
   startGamebtn.style.display = 'none';
   betForm.style.display = 'none';
+  let timeleft = 5;
+  let gameStartTimer = setInterval(function() {
+  countdownEl.style.display = "block";
+  if (timeleft <= 0) {
+    clearInterval(gameStartTimer);
+    if (game.getPlayerCards().length === 2) {
+      window.location.reload();
+    }
+  } else {
+    if (game.getPlayerCards().length > 2) {
+      countdownEl.style.display = "none";
+      clearInterval(gameStartTimer);
+    }
+    countdownEl.innerHTML = timeleft + " seconds remaining";
+  }
+  timeleft -= 1;
+  }, 1000);
 }
 
 function newcard() {
