@@ -9,8 +9,8 @@ let betForm = document.getElementById("bet-form");
 let betInputEl = document.querySelector(".bet-input");
 let betEl = document.querySelector(".bet");
 let countdownEl = document.getElementById("countdown");
+let counterEl = document.getElementById("click-counter");
 
-// Generate the deck programmatically
 function generateDeck() {
   const suits = ["spades", "clubs", "diamonds", "hearts"];
   const values = [
@@ -29,7 +29,6 @@ function generateDeck() {
     { name: "ace", value: 11 },
   ];
 
-  // Combine suits and values to create cards
   return suits.flatMap((suit) =>
     values.map(({ name, value }) => ({
       name: `${name}_${suit}`,
@@ -50,38 +49,37 @@ class BlackJackGame extends Game {
     super(name);
     titleEl.textContent = name;
     this.initialDeck = generateDeck();
-    this.deck = [...this.initialDeck]; // Copy the initial deck
-    this.cards = []; // Clear drawn cards
-    this.score = 0; // Reset the score to zero
+    this.deck = [...this.initialDeck];
+    this.cards = [];
+    this.score = 0;
     this.bet = 0;
+    this.chancesToContinue = 1;
   }
 
   startGame() {
     this.cards = [this.drawCard(), this.drawCard()];
     cardsEl.innerHTML = this.displayPlayerCards();
     newCardbtn.style.display = "block";
-    this.updateScore(); // Update the score based on the drawn cards
+    this.updateScore();
     if (this.hasPlayerWon()) {
       this.updateBet(3);
     }
   }
 
-  // Draws a random card from the deck and updates the state
   drawCard() {
     if (this.deck.length === 0) {
       console.log("No cards left in the deck.");
       return null;
     }
     const randomIndex = Math.floor(Math.random() * this.deck.length);
-    const [randomCard] = this.deck.splice(randomIndex, 1); // Remove the card from the deck
+    const [randomCard] = this.deck.splice(randomIndex, 1);
 
-    this.cards.push(randomCard); // Add the card to the player's hand
+    this.cards.push(randomCard);
     this.updateScore();
 
     return randomCard;
   }
 
-  // Updates the player's score by summing the values of the drawn cards
   updateScore() {
     let aces = 0;
     let score = this.cards.reduce((acc, cur) => {
@@ -92,7 +90,6 @@ class BlackJackGame extends Game {
       return acc + cur.value;
     }, 0);
 
-    // Adjust score for Aces
     while (score > 21 && aces > 0) {
       score -= 10;
       aces -= 1;
@@ -101,18 +98,25 @@ class BlackJackGame extends Game {
     this.score = score;
   }
 
-  // Checks if the player has lost the game
   hasPlayerLost() {
     if (this.score > 21 || this.cards.length > 5) {
       newCardbtn.style.display = "none";
-      this.updateBet(0);
-      return true;
+      if (this.chancesToContinue >= 1) {
+        const extraLife = this.getExtraLife();
+        if (extraLife) {
+          return false;
+        } else {
+          return true;
+        }
+      } else {
+        this.updateBet(0);
+        return true;
+      }
     } else {
       return false;
     }
   }
 
-  // Checks if the player has won the game
   hasPlayerWon() {
     if (this.score === 21) {
       newCardbtn.style.display = "none";
@@ -123,17 +127,14 @@ class BlackJackGame extends Game {
     }
   }
 
-  // Returns the remaining cards in the deck
   getDeck() {
     return this.deck;
   }
 
-  // Returns the cards drawn by the player
   getPlayerCards() {
     return this.cards;
   }
 
-  // Returns the current score of the player
   getPlayerScore() {
     return this.score;
   }
@@ -171,9 +172,65 @@ class BlackJackGame extends Game {
   updateBet(multiplyBy) {
     this.bet *= multiplyBy;
   }
+
+  getExtraLife() {
+    const playerConfirm = confirm(
+      "You lost. Want to try again? (You need to click button 21 times within 5 seconds)"
+    );
+    if (!playerConfirm) {
+      return false;
+    }
+
+    counterEl.style.display = "block";
+    countdownEl.style.display = "block";
+    let timeleft = 5;
+    let counter = 0;
+    let extraLife = false;
+
+    const clickHandler = () => {
+      counter++;
+      counterEl.textContent = counter;
+      if (counter >= 21) {
+        extraLife = true;
+        counterEl.style.display = "none";
+        this.cards.pop();
+        this.updateScore();
+        this.getOutcome();
+        scoreEl.textContent = "Score: " + game.getPlayerScore();
+        gameOutcome.textContent = game.getOutcome();
+        cardsEl.innerHTML = game.displayPlayerCards();
+        betEl.textContent = "Your Bet: " + game.getBet();
+        newCardbtn.style.display = "block";
+        countdownEl.style.display = "none";
+        clearInterval(extraLifeTimer);
+        this.chancesToContinue -= 1;
+      }
+    };
+
+    counterEl.addEventListener("click", clickHandler);
+
+    const extraLifeTimer = setInterval(() => {
+      if (timeleft <= 0) {
+        clearInterval(extraLifeTimer);
+        counterEl.removeEventListener("click", clickHandler);
+        countdownEl.style.display = "none";
+        counterEl.style.display = "none";
+        if (!extraLife) {
+          countdownEl.innerHTML = "Time's up! You didn't earn an extra life.";
+          window.location.reload();
+        }
+      } else {
+        countdownEl.style.display = "block";
+        countdownEl.innerHTML = timeleft + " seconds remaining";
+      }
+      timeleft -= 1;
+    }, 1000);
+
+    return extraLife;
+  }
 }
 
-let game = new BlackJackGame("BlackJack");
+const game = new BlackJackGame("BlackJack");
 
 function startGame() {
   game.startGame();
@@ -183,8 +240,11 @@ function startGame() {
   startNewGamebtn.style.display = "block";
   startGamebtn.style.display = "none";
   betForm.style.display = "none";
+  if (game.hasPlayerWon()) {
+    return;
+  }
   let timeleft = 5;
-  let gameStartTimer = setInterval(function () {
+  const gameStartTimer = setInterval(function () {
     countdownEl.style.display = "block";
     if (timeleft <= 0) {
       clearInterval(gameStartTimer);
@@ -212,7 +272,7 @@ function newcard() {
 
 betForm.addEventListener("submit", function (e) {
   e.preventDefault();
-  let betIsSet = game.setBet(betInputEl.value);
+  const betIsSet = game.setBet(betInputEl.value);
   betInputEl.value = "";
   if (betIsSet) {
     betEl.textContent = "Your Bet: " + game.getBet();
